@@ -4,18 +4,17 @@ from telethon.tl.functions.messages import GetHistoryRequest
 import openai
 import requests
 from io import BytesIO
-from PIL import Image
 from telegram import Bot
 import json
 from datetime import datetime, timezone
 import os
 
 # === НАСТРОЙКИ через переменные окружения ===
-api_id = int(os.getenv(""))
-api_hash = os.getenv("")
+api_id = int(os.getenv("API_ID"))
+api_hash = os.getenv("API_HASH")
 openai.api_key = os.getenv("OPENAI_API_KEY")
-telegram_bot_token = os.getenv("Q")
-channel_to_post = os.getenv("@govnokall")
+telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+channel_to_post = os.getenv("CHANNEL_TO_POST")
 
 channels_to_parse = [
     'toporlive',
@@ -70,13 +69,13 @@ async def main():
             print(f"\n🧠 Обрабатываем сообщение {message.id}: {message.message[:100]}...")
 
             # === Генерация шутки ===
-            prompt = f"Переделай новость ниже в грубую, язвительную, саркастичную 2-строчную шутку с нормальным матом и нотками чёрного юмора. Без соплей, как будто жизнь — это ржавая сковородка по ебалу.\n\n{message.message}"
+            prompt = f"Сделай из этой новости глумливую, агрессивную, чёрную шутку с адекватным количеством мата. Без цензуры. Без морали. Просто жёстко и смешно.\n\n{message.message}"
             try:
                 response = openai.ChatCompletion.create(
-                    model="gpt-3.5-turbo",
+                    model="gpt-4",
                     messages=[{"role": "user", "content": prompt}],
                     max_tokens=100,
-                    temperature=0.95
+                    temperature=0.98
                 )
                 joke = response.choices[0].message.content.strip()
                 print(f"💬 GPT ответ: {joke}")
@@ -84,21 +83,16 @@ async def main():
                 joke = f"[GPT сдох. Ошибка: {e}]"
                 print(joke)
 
-            # === Генерация изображения через DALL-E ===
-            try:
-                dalle_response = openai.Image.create(
-                    prompt=joke,
-                    n=1,
-                    size="512x512"
-                )
-                img_url = dalle_response['data'][0]['url']
-                img_data = requests.get(img_url).content
-                image = BytesIO(img_data)
-                print("🖼 Картинка успешно сгенерирована")
-            except Exception as e:
-                joke += f"\n\n[Ошибка генерации изображения: {e}]"
-                image = None
-                print(joke)
+            # === Извлечение картинки из поста ===
+            image = None
+            if message.media and message.photo:
+                try:
+                    image = BytesIO()
+                    await client.download_media(message, file=image)
+                    image.seek(0)
+                    print("🖼 Картинка из поста сохранена")
+                except Exception as e:
+                    print(f"❌ Ошибка при загрузке картинки: {e}")
 
             # === Публикация ===
             try:
