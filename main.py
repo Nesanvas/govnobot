@@ -11,10 +11,10 @@ from datetime import datetime, timezone
 import os
 
 # === НАСТРОЙКИ через переменные окружения ===
-api_id = int(os.getenv("21923802"))
-api_hash = os.getenv("b2cfccddfc864fb5f1db80bc12e7f9b3")
+api_id = int(os.getenv(""))
+api_hash = os.getenv("")
 openai.api_key = os.getenv("OPENAI_API_KEY")
-telegram_bot_token = os.getenv("7356315664:AAH0YYQx0kULG_iLrHDv28ELob5ZvSAsZXQ")
+telegram_bot_token = os.getenv("Q")
 channel_to_post = os.getenv("@govnokall")
 
 channels_to_parse = [
